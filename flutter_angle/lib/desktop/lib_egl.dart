@@ -74,6 +74,10 @@ class EGL {
         _libEGL = DynamicLibrary.process();
       }
     }
+    // Bind the generated EGL symbols to the library chosen above; without
+    // this they would resolve against process-level symbols (system EGL),
+    // which breaks the Android ANGLE path.
+    egl.setEglDylib(_libEGL!);
   }
 
   EglInitializeResult eglInitialize(Pointer<Void> display) {
@@ -409,8 +413,11 @@ class EGL {
   ) {
     loadEGL(useAngle: _useAngle);
     // Check for invalid small pointer values (like 0x1 or 0x2) which are not valid EGL surfaces
-    // These may be returned by some EGL implementations on macOS
+    // These may be returned by some EGL implementations on macOS.
+    // ANGLE hands out small integer handles by design, so this heuristic must
+    // never run against the ANGLE (Android/Windows) EGL implementations.
     bool isInvalidSurface(Pointer<Void> ptr) {
+      if (!Platform.isMacOS && !Platform.isIOS) return false;
       final address = ptr.address;
       return address > 0 && address < 1000; // Arbitrary cutoff for "suspiciously small" pointer values
     }

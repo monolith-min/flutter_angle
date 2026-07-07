@@ -117,7 +117,6 @@ class FlutterAngle {
   // * mulitple textures on Android and the other OSs
   Future<void> init([bool useDebugContext = false, bool useAngle = false]) async {
     if (_display != nullptr) return;
-    _rawOpenGl();
 
     _isApple = Platform.isIOS || Platform.isMacOS;
     _useAngle = useAngle;
@@ -139,6 +138,11 @@ class FlutterAngle {
     }
 
     _libEGL = EGL(useAngle: _useAngle);
+    // _useAngle is final past this point (the plugin may have forced the
+    // OpenGL fallback), so this is the earliest safe moment to bind the GLES
+    // symbols to the matching library (ANGLE vs system driver).
+    _libOpenGLES = null;
+    gl.setGlesDylib(_rawOpenGl());
     angleConsole.info(result);
 
     if (result == null) {
