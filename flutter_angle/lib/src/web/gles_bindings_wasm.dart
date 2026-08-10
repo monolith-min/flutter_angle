@@ -216,6 +216,12 @@ external void glBufferSubData(JSObject gl, int target, int dstByteOffset, JSAny 
 @JS()
 external JSAny? glCreateVertexArray(JSObject gl);
 @JS()
+external JSAny? glFenceSync(JSObject gl, int condition, int flags);
+@JS()
+external int glClientWaitSync(JSObject gl, JSAny? sync, int flags, int timeout);
+@JS()
+external void glDeleteSync(JSObject gl, JSAny? sync);
+@JS()
 external JSAny? glCreateProgram(JSObject gl);
 @JS()
 external void glAttachShader(JSObject gl, JSAny? program, JSAny? shader);

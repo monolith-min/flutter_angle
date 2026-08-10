@@ -734,6 +734,22 @@ class RenderingContext{
     checkError('bindVertexArray');
   }
 
+  // ── GL sync objects (fence) — desktop wrapper 와 동일 시그니처 ──────────
+  WebGLSync fenceSync(int condition, int flags) {
+    startCheck("fenceSync");
+    return WebGLSync(glFenceSync(_gl, condition, flags));
+  }
+
+  int clientWaitSync(WebGLSync sync, int flags, int timeoutNanos) {
+    startCheck("clientWaitSync");
+    return glClientWaitSync(_gl, sync.id, flags, timeoutNanos);
+  }
+
+  void deleteSync(WebGLSync sync) {
+    startCheck("deleteSync");
+    glDeleteSync(_gl, sync.id);
+  }
+
   void deleteVertexArray(VertexArrayObject array) {
     startCheck("deleteVertexArray");
     glDeleteVertexArray(_gl, array.id);

@@ -67,6 +67,34 @@ class RenderingContext {
     checkError('bindVertexArray');
   }
 
+  // ── GL sync objects (fence) ────────────────────────────────────────────
+  // glFinish 대체용: present 후 fence 를 심고 다음 프레임 시작에서 이전 fence 만
+  // 기다리면 CPU/GPU 파이프라이닝을 유지한 채 프레임 완료를 보장할 수 있다.
+
+  /// glFenceSync — [condition] 은 보통 WebGL.SYNC_GPU_COMMANDS_COMPLETE, [flags] 는 0.
+  WebGLSync fenceSync(int condition, int flags){
+    startCheck('fenceSync');
+    final sync = gl.glFenceSync(condition, flags);
+    checkError('fenceSync');
+    return WebGLSync(sync);
+  }
+
+  /// glClientWaitSync — [timeoutNanos] 나노초까지 블록. 반환값은
+  /// ALREADY_SIGNALED / TIMEOUT_EXPIRED / CONDITION_SATISFIED / WAIT_FAILED.
+  int clientWaitSync(WebGLSync sync, int flags, int timeoutNanos){
+    startCheck('clientWaitSync');
+    final result = gl.glClientWaitSync(sync.id, flags, timeoutNanos);
+    checkError('clientWaitSync');
+    return result;
+  }
+
+  /// glDeleteSync
+  void deleteSync(WebGLSync sync){
+    startCheck('deleteSync');
+    gl.glDeleteSync(sync.id);
+    checkError('deleteSync');
+  }
+
   void blitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter){
     startCheck('blitFramebuffer');
     gl.glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
