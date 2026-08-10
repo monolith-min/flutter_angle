@@ -189,7 +189,13 @@ class FlutterAngle {
         EglConfigAttribute.blueSize: 8,
         EglConfigAttribute.alphaSize: 8,
         EglConfigAttribute.depthSize: 24,
-        EglConfigAttribute.samples: 4,
+        // samples 를 요구하지 않는다(0). 이 폴백은 iOS 실기기 등 플러그인이
+        // eglConfigId 를 안 넘기는 플랫폼에서 쓰이는데, 4 를 요구하면 default
+        // framebuffer 가 4x MSAA 구성이 되어 매 프레임 풀해상도 멀티샘플
+        // 래스터+resolve 대역폭을 지불한다(발열). 소비자(macbear_3d)는 AA 를
+        // 포스트(FXAA/CAS)로 처리하고 씬은 오프스크린 FBO 에 그리므로 default
+        // framebuffer MSAA 는 순수 낭비다.
+        EglConfigAttribute.samples: 0,
         EglConfigAttribute.stencilSize: 8,
       };
     }
