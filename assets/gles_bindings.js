@@ -361,6 +361,16 @@ function glBufferSubData(gl, target, dstByteOffset, srcData, srcOffset, length){
   gl.bufferSubData(target, dstByteOffset, srcData);
 }
 
+function glFenceSync(gl, condition, flags) {
+  return gl.fenceSync(condition, flags);
+}
+function glClientWaitSync(gl, sync, flags, timeout) {
+  return gl.clientWaitSync(sync, flags, timeout);
+}
+function glDeleteSync(gl, sync) {
+  gl.deleteSync(sync);
+}
+
 function glCreateVertexArray(gl) {
   return gl.createVertexArray();
 }

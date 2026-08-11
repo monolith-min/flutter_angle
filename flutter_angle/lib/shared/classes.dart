@@ -62,6 +62,12 @@ class VertexArrayObject{
   VertexArrayObject(this.id);
 }
 
+/// GL sync object (glFenceSync). Desktop: GLsync pointer, web: WebGLSync JS object.
+class WebGLSync{
+  final dynamic id;
+  WebGLSync(this.id);
+}
+
 class WebGLShader{
   final dynamic id;
   WebGLShader(this.id);
