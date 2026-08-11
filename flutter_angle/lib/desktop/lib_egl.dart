@@ -389,8 +389,11 @@ class EGL {
     Pointer<Void> context,
   ) {
     // Check for invalid small pointer values (like 0x1 or 0x2) which are not valid EGL surfaces
-    // These may be returned by some EGL implementations on macOS
+    // These may be returned by some EGL implementations on macOS.
+    // ANGLE hands out small integer handles by design, so this heuristic must
+    // never run against the ANGLE (Android/Windows) EGL implementations.
     bool isInvalidSurface(Pointer<Void> ptr) {
+      if (!Platform.isMacOS && !Platform.isIOS) return false;
       final address = ptr.address;
       return address > 0 &&
           address <
