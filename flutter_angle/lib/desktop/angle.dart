@@ -183,7 +183,14 @@ class FlutterAngle {
         EglConfigAttribute.blueSize: 8,
         EglConfigAttribute.alphaSize: 8,
         EglConfigAttribute.depthSize: 24,
-        EglConfigAttribute.samples: 4,
+        // Don't request multisampling (0). This fallback is used on platforms
+        // where the plugin doesn't return an eglConfigId (e.g. iOS real
+        // devices); requesting 4 makes the default framebuffer 4x MSAA, which
+        // pays full-resolution multisample rasterization + resolve bandwidth
+        // every frame — wasted work for consumers that render into offscreen
+        // FBOs and resolve/post-process there, which is the common setup for
+        // 3D engines built on this package.
+        EglConfigAttribute.samples: 0,
         EglConfigAttribute.stencilSize: 8,
       };
     }
