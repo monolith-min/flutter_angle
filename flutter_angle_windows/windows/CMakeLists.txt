@@ -44,12 +44,5 @@ target_link_libraries(
 set(flutter_angle_windows_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libEGL.dll"
   "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libGLESv2.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libc++.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/msvcp140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/ucrtbased.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vccorlib140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140_1d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/zlib.dll"
   PARENT_SCOPE
 )
