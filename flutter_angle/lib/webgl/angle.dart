@@ -12,7 +12,11 @@ import 'dart:ui_web' as ui;
 class FlutterAngleTexture {
   final int textureId;
   late final int rboId;
-  late final dynamic surfaceId;
+  /// The `<canvas>` element this texture renders into (web only). It is a
+  /// `package:web` JS interop extension type and must stay statically typed:
+  /// a `dynamic` member access on it compiles to a dart2js interceptor lookup
+  /// (e.g. `set$width`) that plain JS objects do not have.
+  final html.HTMLCanvasElement? surfaceId;
   late final int fboId;
   late AngleOptions options;
   LibOpenGLES? _libOpenGLES;
@@ -24,7 +28,7 @@ class FlutterAngleTexture {
     this.rboId, 
     this.fboId,
     this.options
-  ){}
+  ) : surfaceId = null;
 
   FlutterAngleTexture.fromSurface(
     FlutterAngle flutterAngle,
@@ -38,8 +42,12 @@ class FlutterAngleTexture {
 
   LibOpenGLES get rawOpenGl {
     if (_libOpenGLES == null) {
+      final canvas = surfaceId;
+      if (canvas == null) {
+        throw StateError('FlutterAngleTexture $textureId has no backing canvas');
+      }
       final rc = RenderingContext.createCanvas(
-        surfaceId,
+        canvas,
         {
           "alpha": options.alpha, 
           "antialias": options.antialias
@@ -132,9 +140,15 @@ class FlutterAngle{
       texture.rawOpenGl.glFlush();
     }
   }
-  Future<void> resize(FlutterAngleTexture texture, AngleOptions options) async{
-    texture.surfaceId?.width = (options.width * options.dpr).toInt();
-    texture.surfaceId?.height = (options.height * options.dpr).toInt();
+  Future<void> resize(FlutterAngleTexture texture, AngleOptions options) async {
+    final canvas = texture.surfaceId;
+    if (canvas == null) return;
+    canvas
+      ..width = (options.width * options.dpr).toInt()
+      ..height = (options.height * options.dpr).toInt();
+    // Keep the texture's options in step with the canvas so getContext() and
+    // updateSource() see the new size.
+    texture.options = options;
   }
   Future<void> deleteTexture(FlutterAngleTexture texture) async {}
   void activateTexture(FlutterAngleTexture texture) {}
