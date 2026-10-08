@@ -750,6 +750,68 @@ class RenderingContext{
     glDeleteSync(_gl, sync.id);
   }
 
+  // ── GPU timer queries (EXT_disjoint_timer_query_webgl2) — desktop wrapper 와
+  // 동일 시그니처. WebGL2 는 코어 createQuery/beginQuery/getQueryParameter 에
+  // 확장 enum(TIME_ELAPSED_EXT, GPU_DISJOINT_EXT)을 넘기는 방식이다.
+  bool? _timerQuerySupported;
+
+  /// `getExtension('EXT_disjoint_timer_query_webgl2')` 가 non-null 이면 true.
+  /// getExtension 호출 자체가 확장을 활성화하므로 TIME_ELAPSED_EXT 사용 전에
+  /// 반드시 한 번은 거친다(아래 beginQuery/endQuery 가 대신 호출한다).
+  bool get timerQuerySupported => _timerQuerySupported ??=
+      glGetExtension(_gl, 'EXT_disjoint_timer_query_webgl2') != null;
+
+  WebGLQuery createQuery() {
+    startCheck("createQuery");
+    return WebGLQuery(glCreateQuery(_gl));
+  }
+
+  void deleteQuery(WebGLQuery query) {
+    startCheck("deleteQuery");
+    glDeleteQuery(_gl, query.id);
+    checkError('deleteQuery');
+  }
+
+  void beginQuery(int target, WebGLQuery query) {
+    startCheck("beginQuery");
+    if (target == WebGL.TIME_ELAPSED_EXT && !timerQuerySupported) return;
+    glBeginQuery(_gl, target, query.id);
+    checkError('beginQuery');
+  }
+
+  void endQuery(int target) {
+    startCheck("endQuery");
+    if (target == WebGL.TIME_ELAPSED_EXT && !timerQuerySupported) return;
+    glEndQuery(_gl, target);
+    checkError('endQuery');
+  }
+
+  /// getQueryParameter — [pname] 은 보통 WebGL.QUERY_RESULT_AVAILABLE (0/1).
+  int getQueryObjectUint(WebGLQuery query, int pname) {
+    startCheck("getQueryObjectUint");
+    return _queryParameterToInt(glGetQueryParameter(_gl, query.id, pname));
+  }
+
+  /// getQueryParameter — [pname] 은 보통 WebGL.QUERY_RESULT (경과 시간, ns).
+  int getQueryObjectUint64(WebGLQuery query, int pname) {
+    startCheck("getQueryObjectUint64");
+    return _queryParameterToInt(glGetQueryParameter(_gl, query.id, pname));
+  }
+
+  static int _queryParameterToInt(JSAny? value) {
+    final Object? v = value?.dartify();
+    if (v is bool) return v ? 1 : 0;
+    if (v is num) return v.toInt();
+    return 0;
+  }
+
+  /// getParameter(GPU_DISJOINT_EXT). 읽으면 플래그가 리셋된다.
+  bool get gpuDisjoint {
+    startCheck("gpuDisjoint");
+    if (!timerQuerySupported) return false;
+    return glGetParameter(_gl, WebGL.GPU_DISJOINT_EXT)?.dartify() == true;
+  }
+
   void deleteVertexArray(VertexArrayObject array) {
     startCheck("deleteVertexArray");
     glDeleteVertexArray(_gl, array.id);

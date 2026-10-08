@@ -366,6 +366,21 @@ function glClientWaitSync(gl, sync, flags, timeout) {
 function glDeleteSync(gl, sync) {
   gl.deleteSync(sync);
 }
+function glCreateQuery(gl) {
+  return gl.createQuery();
+}
+function glDeleteQuery(gl, query) {
+  gl.deleteQuery(query);
+}
+function glBeginQuery(gl, target, query) {
+  gl.beginQuery(target, query);
+}
+function glEndQuery(gl, target) {
+  gl.endQuery(target);
+}
+function glGetQueryParameter(gl, query, pname) {
+  return gl.getQueryParameter(query, pname);
+}
 function glCreateVertexArray(gl) {
   return gl.createVertexArray();
 }

@@ -95,6 +95,115 @@ class RenderingContext {
     checkError('deleteSync');
   }
 
+  // ── GPU timer queries (GL_EXT_disjoint_timer_query) ─────────────────────
+  // beginQuery(TIME_ELAPSED_EXT) ~ endQuery 사이에 제출된 GL 명령의 GPU 실행
+  // 시간을 ns 단위로 잰다. 결과는 비동기이므로 QUERY_RESULT_AVAILABLE 을 폴링한 뒤
+  // QUERY_RESULT 를 읽고, 그 사이 gpuDisjoint 가 true 였다면 값을 버린다.
+  // 미지원 환경(확장 없음 또는 심볼 없음)에서는 예외 없이 모두 no-op 이다.
+
+  bool? _timerQuerySupported;
+
+  /// 확장 문자열 `GL_EXT_disjoint_timer_query` 와 네이티브 심볼이 모두 있을 때 true.
+  /// false 이면 [createQuery] 는 id 0 을 돌려주고 나머지 쿼리 메서드는 no-op.
+  bool get timerQuerySupported => _timerQuerySupported ??=
+      gl.timerQuerySymbolsAvailable && _hasExtension('GL_EXT_disjoint_timer_query');
+
+  bool _hasExtension(String name) {
+    final int count = getIntegerv(gl.GL_NUM_EXTENSIONS);
+    if (count > 0) {
+      for (int i = 0; i < count; i++) {
+        if (getStringi(gl.GL_EXTENSIONS, i) == name) return true;
+      }
+      return false;
+    }
+    // ES2 스타일 fallback: 공백 구분 단일 문자열.
+    gl.glGetError(); // GL_NUM_EXTENSIONS 미지원 시 남은 INVALID_ENUM 을 비운다.
+    final Pointer<UnsignedChar> p = gl.glGetString(gl.GL_EXTENSIONS);
+    if (p == nullptr) return false;
+    return p.cast<Utf8>().toDartString().split(' ').contains(name);
+  }
+
+  /// glGenQueriesEXT. 미지원이면 id 0 을 돌려주고 이후 호출은 모두 no-op.
+  WebGLQuery createQuery() {
+    startCheck('createQuery');
+    final genQueries = gl.glGenQueriesEXT;
+    if (genQueries == null) return WebGLQuery(0);
+    final v = calloc<Uint32>();
+    genQueries(1, v);
+    final int id = v.value;
+    calloc.free(v);
+    checkError('createQuery');
+    return WebGLQuery(id);
+  }
+
+  /// glDeleteQueriesEXT
+  void deleteQuery(WebGLQuery query) {
+    startCheck('deleteQuery');
+    final deleteQueries = gl.glDeleteQueriesEXT;
+    if (deleteQueries == null || query.id == 0) return;
+    final v = calloc<Uint32>();
+    v.value = query.id;
+    deleteQueries(1, v);
+    calloc.free(v);
+    checkError('deleteQuery');
+  }
+
+  /// glBeginQueryEXT — [target] 은 WebGL.TIME_ELAPSED_EXT. 같은 target 의 쿼리는
+  /// 한 번에 하나만 활성화할 수 있고, begin~end 는 중첩되지 않는다.
+  void beginQuery(int target, WebGLQuery query) {
+    startCheck('beginQuery');
+    final beginQueryFn = gl.glBeginQueryEXT;
+    if (beginQueryFn == null || query.id == 0) return;
+    if (target == WebGL.TIME_ELAPSED_EXT && !timerQuerySupported) return;
+    beginQueryFn(target, query.id);
+    checkError('beginQuery');
+  }
+
+  /// glEndQueryEXT
+  void endQuery(int target) {
+    startCheck('endQuery');
+    final endQueryFn = gl.glEndQueryEXT;
+    if (endQueryFn == null) return;
+    if (target == WebGL.TIME_ELAPSED_EXT && !timerQuerySupported) return;
+    endQueryFn(target);
+    checkError('endQuery');
+  }
+
+  /// glGetQueryObjectuivEXT — [pname] 은 보통 WebGL.QUERY_RESULT_AVAILABLE (0/1).
+  int getQueryObjectUint(WebGLQuery query, int pname) {
+    startCheck('getQueryObjectUint');
+    final getQueryObjectuiv = gl.glGetQueryObjectuivEXT;
+    if (getQueryObjectuiv == null || query.id == 0) return 0;
+    final v = calloc<Uint32>();
+    getQueryObjectuiv(query.id, pname, v);
+    final int result = v.value;
+    calloc.free(v);
+    checkError('getQueryObjectUint');
+    return result;
+  }
+
+  /// glGetQueryObjectui64vEXT — [pname] 은 보통 WebGL.QUERY_RESULT (경과 시간, ns).
+  /// QUERY_RESULT_AVAILABLE 이 1 이 되기 전에 읽으면 GPU 완료까지 블록된다.
+  int getQueryObjectUint64(WebGLQuery query, int pname) {
+    startCheck('getQueryObjectUint64');
+    final getQueryObjectui64v = gl.glGetQueryObjectui64vEXT;
+    if (getQueryObjectui64v == null || query.id == 0) return 0;
+    final v = calloc<Uint64>();
+    getQueryObjectui64v(query.id, pname, v);
+    final int result = v.value;
+    calloc.free(v);
+    checkError('getQueryObjectUint64');
+    return result;
+  }
+
+  /// GL_GPU_DISJOINT_EXT. 읽으면 플래그가 리셋된다(스펙). true 였다면 그 사이에
+  /// 완료된 타이머 결과는 신뢰할 수 없으므로 버려야 한다.
+  bool get gpuDisjoint {
+    startCheck('gpuDisjoint');
+    if (!timerQuerySupported) return false;
+    return getIntegerv(WebGL.GPU_DISJOINT_EXT) != 0;
+  }
+
   void blitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter){
     startCheck('blitFramebuffer');
     gl.glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);

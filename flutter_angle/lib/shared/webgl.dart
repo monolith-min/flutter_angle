@@ -433,6 +433,10 @@ abstract class WebGL {
 
   static const int GEQUAL = 0x0206;
 
+  /// EXT_disjoint_timer_query: whether the GPU clock was disjoint since the
+  /// last read. Reading it resets the flag.
+  static const int GPU_DISJOINT_EXT = 0x8FBB;
+
   static const int GREATER = 0x0204;
 
   static const int GREEN_BITS = 0x0D53;
@@ -1068,6 +1072,10 @@ abstract class WebGL {
   static const int TIMEOUT_EXPIRED = 0x911B;
 
   static const int TIMEOUT_IGNORED = -1;
+
+  /// EXT_disjoint_timer_query: beginQuery/endQuery target that measures GPU
+  /// elapsed time in nanoseconds (read back with QUERY_RESULT).
+  static const int TIME_ELAPSED_EXT = 0x88BF;
 
   static const int TRANSFORM_FEEDBACK = 0x8E22;
 

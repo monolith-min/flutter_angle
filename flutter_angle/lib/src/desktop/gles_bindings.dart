@@ -46,6 +46,76 @@ void _tdRead(TypedData d, ffi.Pointer<ffi.Uint8> p) {
 }
 // ---------------------------------------------------------------------------
 
+// --- GL_EXT_disjoint_timer_query (monolith fork) ---------------------------
+// GPU timer queries are an extension, not ES3 core. ANGLE's libGLESv2 exports
+// both the core glGenQueries family and the *EXT entry points, but the 64-bit
+// result reader glGetQueryObjectui64vEXT only exists under the EXT name. On a
+// driver that lacks a symbol (e.g. the system GLES fallback on Android) the
+// binding is null instead of throwing, and RenderingContext turns the call
+// into a no-op with `timerQuerySupported == false`.
+
+ffi.Pointer<T>? _lkOrNull<T extends ffi.NativeType>(String symbol) {
+  final lib = _glesDylib;
+  if (lib == null) {
+    throw StateError(
+        'flutter_angle: GLES library not set. FlutterAngle.init() must complete before GL calls.');
+  }
+  return lib.providesSymbol(symbol) ? lib.lookup<T>(symbol) : null;
+}
+
+/// Looks up the [ext] entry point first and falls back to the ES3 core [core]
+/// symbol when one exists.
+ffi.Pointer<T>? _lkExt<T extends ffi.NativeType>(String ext, [String? core]) {
+  return _lkOrNull<T>(ext) ?? (core == null ? null : _lkOrNull<T>(core));
+}
+
+late final void Function(int, ffi.Pointer<ffi.Uint32>)? glGenQueriesEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Int32, ffi.Pointer<ffi.Uint32>)>>('glGenQueriesEXT', 'glGenQueries');
+  if (p == null) return null;
+  return p.asFunction<void Function(int, ffi.Pointer<ffi.Uint32>)>(isLeaf: false);
+}();
+
+late final void Function(int, ffi.Pointer<ffi.Uint32>)? glDeleteQueriesEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Int32, ffi.Pointer<ffi.Uint32>)>>('glDeleteQueriesEXT', 'glDeleteQueries');
+  if (p == null) return null;
+  return p.asFunction<void Function(int, ffi.Pointer<ffi.Uint32>)>(isLeaf: false);
+}();
+
+late final void Function(int, int)? glBeginQueryEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Uint32, ffi.Uint32)>>('glBeginQueryEXT', 'glBeginQuery');
+  if (p == null) return null;
+  return p.asFunction<void Function(int, int)>(isLeaf: false);
+}();
+
+late final void Function(int)? glEndQueryEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Uint32)>>('glEndQueryEXT', 'glEndQuery');
+  if (p == null) return null;
+  return p.asFunction<void Function(int)>(isLeaf: false);
+}();
+
+late final void Function(int, int, ffi.Pointer<ffi.Uint32>)? glGetQueryObjectuivEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Uint32, ffi.Uint32, ffi.Pointer<ffi.Uint32>)>>('glGetQueryObjectuivEXT', 'glGetQueryObjectuiv');
+  if (p == null) return null;
+  return p.asFunction<void Function(int, int, ffi.Pointer<ffi.Uint32>)>(isLeaf: false);
+}();
+
+/// 64-bit query result (nanoseconds for GL_TIME_ELAPSED_EXT). EXT-only symbol.
+late final void Function(int, int, ffi.Pointer<ffi.Uint64>)? glGetQueryObjectui64vEXT = () {
+  final p = _lkExt<ffi.NativeFunction<ffi.Void Function(ffi.Uint32, ffi.Uint32, ffi.Pointer<ffi.Uint64>)>>('glGetQueryObjectui64vEXT');
+  if (p == null) return null;
+  return p.asFunction<void Function(int, int, ffi.Pointer<ffi.Uint64>)>(isLeaf: false);
+}();
+
+/// true when every entry point needed for GPU elapsed-time queries resolved.
+bool get timerQuerySymbolsAvailable =>
+    glGenQueriesEXT != null &&
+    glDeleteQueriesEXT != null &&
+    glBeginQueryEXT != null &&
+    glEndQueryEXT != null &&
+    glGetQueryObjectuivEXT != null &&
+    glGetQueryObjectui64vEXT != null;
+// ---------------------------------------------------------------------------
+
 
 // The @Native annotation automatically resolves the 'Pointer' vs 'TypedData' 
 // mismatch when isLeaf is true.

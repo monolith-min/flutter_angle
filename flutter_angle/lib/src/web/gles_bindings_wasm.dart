@@ -222,6 +222,16 @@ external int glClientWaitSync(JSObject gl, JSAny? sync, int flags, int timeout);
 @JS()
 external void glDeleteSync(JSObject gl, JSAny? sync);
 @JS()
+external JSAny? glCreateQuery(JSObject gl);
+@JS()
+external void glDeleteQuery(JSObject gl, JSAny? query);
+@JS()
+external void glBeginQuery(JSObject gl, int target, JSAny? query);
+@JS()
+external void glEndQuery(JSObject gl, int target);
+@JS()
+external JSAny? glGetQueryParameter(JSObject gl, JSAny? query, int pname);
+@JS()
 external JSAny? glCreateProgram(JSObject gl);
 @JS()
 external void glAttachShader(JSObject gl, JSAny? program, JSAny? shader);

@@ -68,6 +68,13 @@ class WebGLSync{
   WebGLSync(this.id);
 }
 
+/// GL query object (glGenQueries / EXT_disjoint_timer_query). Desktop: GLuint id
+/// (0 when timer queries are unsupported), web: WebGLQuery JS object.
+class WebGLQuery{
+  final dynamic id;
+  WebGLQuery(this.id);
+}
+
 class WebGLShader{
   final dynamic id;
   WebGLShader(this.id);

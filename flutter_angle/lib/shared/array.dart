@@ -594,5 +594,7 @@ const List<int> webGL =[
   0x8B31,
   0x0BA2,
   0x911D,
+  0x88BF,
+  0x8FBB,
   0
 ];
